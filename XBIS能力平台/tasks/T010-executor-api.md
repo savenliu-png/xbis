@@ -45,13 +45,13 @@
 ## 4. 功能范围
 
 ### 4.1 包含功能
-- [ ] 执行器列表查询（/api/v1/executors）
-- [ ] 执行器详情查询（/api/v1/executors/:id）
-- [ ] 执行器创建（/api/v1/executors）
-- [ ] 执行器更新（/api/v1/executors/:id）
-- [ ] 执行器删除（/api/v1/executors/:id）
-- [ ] 执行器健康检查（/api/v1/executors/:id/health）
-- [ ] 执行器绑定能力（/api/v1/executors/:id/bindings）
+- [ ] 执行器列表查询（/admin-api/v1/executors）
+- [ ] 执行器详情查询（/admin-api/v1/executors/:id）
+- [ ] 执行器创建（/admin-api/v1/executors）
+- [ ] 执行器更新（/admin-api/v1/executors/:id）
+- [ ] 执行器删除（/admin-api/v1/executors/:id）
+- [ ] 执行器健康检查（/admin-api/v1/executors/:id/health）
+- [ ] 执行器绑定能力（/admin-api/v1/executors/:id/bindings）
 
 ### 4.2 不包含功能（明确排除）
 - 执行器调度逻辑（由调度器实现）
@@ -68,7 +68,7 @@ export interface ExecutorListParams {
   status?: 'active' | 'inactive' | 'degraded' | 'offline';
   type?: 'docker' | 'kubernetes' | 'vm' | 'serverless';
   keyword?: string;
-  page?: number;
+  pageNo?: number;
   pageSize?: number;
 }
 
@@ -76,8 +76,12 @@ export interface ExecutorListParams {
 export interface ExecutorListResponse {
   items: Executor[];
   total: number;
-  statusStats: { status: string; count: number }[];
-  typeStats: { type: string; count: number }[];
+  pageNo: number;
+  pageSize: number;
+  /** 状态统计，后端支持时返回 */
+  statusStats?: { status: string; count: number }[];
+  /** 类型统计，后端支持时返回 */
+  typeStats?: { type: string; count: number }[];
 }
 
 // 执行器详情响应
@@ -93,10 +97,12 @@ export interface ExecutorCreateRequest {
   description?: string;
   type: 'docker' | 'kubernetes' | 'vm' | 'serverless';
   endpoint: string;
-  capabilities: string[];
-  maxConcurrency: number;
+  /** 能力列表，后端支持默认值 */
+  capabilities?: string[];
+  /** 最大并发数，后端支持默认值 */
+  maxConcurrency?: number;
   version: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // 执行器更新请求
@@ -108,7 +114,7 @@ export interface ExecutorUpdateRequest {
   maxConcurrency?: number;
   version?: string;
   status?: 'active' | 'inactive' | 'degraded' | 'offline';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // 执行器健康响应
@@ -130,9 +136,12 @@ export interface ExecutorHealthResponse {
 // 执行器绑定请求
 export interface ExecutorBindingRequest {
   abilityId: string;
-  priority: number;
-  weight: number;
-  isDefault: boolean;
+  /** 优先级，后端支持默认值 */
+  priority?: number;
+  /** 权重，后端支持默认值 */
+  weight?: number;
+  /** 是否默认，后端支持默认值 */
+  isDefault?: boolean;
 }
 
 // 执行器绑定响应
@@ -144,6 +153,7 @@ export interface ExecutorBindingResponse {
   weight: number;
   isDefault: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 ```
 
@@ -184,7 +194,7 @@ export interface ExecutorBindingResponse {
 
 #### 执行器列表查询
 - **Method**: GET
-- **Path**: `/api/v1/executors`
+- **Path**: `/admin-api/v1/executors`
 - **请求类型**: `ExecutorListParams`
 - **响应类型**: `ExecutorListResponse`
 - **权限**: 管理员
@@ -195,7 +205,7 @@ export interface ExecutorBindingResponse {
   "status": "active",
   "type": "docker",
   "keyword": "gpu",
-  "page": 1,
+  "pageNo": 1,
   "pageSize": 20
 }
 ```
@@ -224,13 +234,13 @@ export interface ExecutorBindingResponse {
 
 #### 执行器详情查询
 - **Method**: GET
-- **Path**: `/api/v1/executors/:id`
+- **Path**: `/admin-api/v1/executors/:id`
 - **响应类型**: `ExecutorDetailResponse`
 - **权限**: 管理员
 
 #### 执行器创建
 - **Method**: POST
-- **Path**: `/api/v1/executors`
+- **Path**: `/admin-api/v1/executors`
 - **请求类型**: `ExecutorCreateRequest`
 - **响应类型**: `Executor`
 - **权限**: 管理员
@@ -254,25 +264,25 @@ export interface ExecutorBindingResponse {
 
 #### 执行器更新
 - **Method**: PUT
-- **Path**: `/api/v1/executors/:id`
+- **Path**: `/admin-api/v1/executors/:id`
 - **请求类型**: `ExecutorUpdateRequest`
 - **响应类型**: `Executor`
 - **权限**: 管理员
 
 #### 执行器删除
 - **Method**: DELETE
-- **Path**: `/api/v1/executors/:id`
+- **Path**: `/admin-api/v1/executors/:id`
 - **权限**: 管理员
 
 #### 执行器健康检查
 - **Method**: GET
-- **Path**: `/api/v1/executors/:id/health`
+- **Path**: `/admin-api/v1/executors/:id/health`
 - **响应类型**: `ExecutorHealthResponse`
 - **权限**: 管理员
 
 #### 执行器绑定能力
 - **Method**: POST
-- **Path**: `/api/v1/executors/:id/bindings`
+- **Path**: `/admin-api/v1/executors/:id/bindings`
 - **请求类型**: `ExecutorBindingRequest`
 - **响应类型**: `ExecutorBindingResponse`
 - **权限**: 管理员

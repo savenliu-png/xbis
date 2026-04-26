@@ -65,7 +65,7 @@ export interface CallbackRecord {
   id: string;
   jobId: string;
   callbackUrl: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   status: 'pending' | 'success' | 'failed' | 'retrying';
   attemptCount: number;
   maxAttempts: number;
@@ -84,17 +84,17 @@ export interface CallbackConfig {
   enabled: boolean;
 }
 
-// 回调请求
+// 回调请求（后端内部使用）
 export interface CallbackRequest {
   jobId: string;
   callbackUrl: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
 }
 
 // 回调响应
 export interface CallbackResponse {
   recordId: string;
-  status: string;
+  status: 'pending' | 'success' | 'failed' | 'retrying';
   message: string;
 }
 ```
@@ -140,7 +140,7 @@ export interface CallbackResponse {
 - **Method**: GET
 - **Path**: `/api/v1/callbacks`
 - **请求类型**: `{ jobId?: string; status?: string; page?: number; pageSize?: number }`
-- **响应类型**: `{ items: CallbackRecord[]; total: number }`
+- **响应类型**: `{ items: CallbackRecord[]; total: number; page: number; pageSize: number }`
 - **权限**: 用户（已登录）
 
 **响应示例**:
@@ -148,21 +148,23 @@ export interface CallbackResponse {
 {
   "success": true,
   "data": {
-    "items": [
-      {
-        "id": "cb-001",
-        "jobId": "job-001",
-        "callbackUrl": "https://example.com/callback",
-        "payload": { "jobId": "job-001", "status": "completed" },
-        "status": "success",
-        "attemptCount": 1,
-        "maxAttempts": 3,
-        "createdAt": "2026-04-24T10:00:00Z",
-        "completedAt": "2026-04-24T10:00:01Z"
+        "items": [
+          {
+            "id": "cb-001",
+            "jobId": "job-001",
+            "callbackUrl": "https://example.com/callback",
+            "payload": { "jobId": "job-001", "status": "completed" },
+            "status": "success",
+            "attemptCount": 1,
+            "maxAttempts": 3,
+            "createdAt": "2026-04-24T10:00:00Z",
+            "completedAt": "2026-04-24T10:00:01Z"
+          }
+        ],
+        "total": 10,
+        "page": 1,
+        "pageSize": 20
       }
-    ],
-    "total": 10
-  }
 }
 ```
 
