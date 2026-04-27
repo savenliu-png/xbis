@@ -229,10 +229,10 @@ interface AbilityListPageState {
 | 接口 | Method | Path | 触发时机 | 参数 | 错误处理 |
 |------|--------|------|----------|------|----------|
 | 能力列表 | GET | `/admin-api/v1/abilities` | 页面加载/筛选/分页 | `AdminAbilityFilter` | 显示错误提示 |
-| 状态切换 | PUT | `/admin-api/v1/abilities/:id/status` | 点击开关 | `{ isEnabled }` | 显示错误提示，回滚状态 |
+| 状态切换 | PUT | `/admin-api/v1/abilities/:id/status` | 点击开关 | `AbilityStatusToggleRequest` | 显示错误提示，回滚状态 |
 | 删除能力 | DELETE | `/admin-api/v1/abilities/:id` | 确认删除 | 无 | 显示错误提示 |
 | 批量删除 | POST | `/admin-api/v1/abilities/batch-delete` | 批量操作 | `{ ids: string[] }` | 显示错误提示 |
-| 批量更新状态 | POST | `/admin-api/v1/abilities/batch-status` | 批量操作 | `{ ids: string[], isEnabled: boolean }` | 显示错误提示 |
+| 批量更新状态 | POST | `/admin-api/v1/abilities/batch-status` | 批量操作 | `BatchStatusRequest` | 显示错误提示 |
 
 ### 5.2 请求参数
 ```typescript
@@ -248,7 +248,6 @@ interface AdminAbilityFilter {
 
 // 状态切换请求
 interface AbilityStatusToggleRequest {
-  abilityId: string;
   isEnabled: boolean;
 }
 
@@ -266,10 +265,15 @@ interface BatchStatusRequest {
 ### 5.3 响应处理
 ```typescript
 // 列表响应
-interface AbilityListResponse {
+interface AdminAbilityListResponse {
   items: AdminAbilityItem[];
   total: number;
 }
+
+// AdminAbilityItem 包含关联统计字段（可选）：
+// subscriberCount?: number  — 当前订阅用户数
+// activeJobCount?: number   — 进行中任务数
+// totalJobCount?: number    — 历史任务总数
 
 // 错误处理策略
 // - 401: 跳转登录页

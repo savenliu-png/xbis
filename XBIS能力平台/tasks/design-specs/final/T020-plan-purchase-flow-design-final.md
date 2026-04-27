@@ -72,25 +72,29 @@ AppShell
 [进入购买页面]
     │
     ▼
-[选择套餐]
+[选择套餐] ──► GET /portal-api/v1/subscriptions/plans
     │
     ▼
-[输入优惠券（可选）]
+[费用计算] ──► POST /portal-api/v1/subscriptions/change-quote
+    │              返回: originalAmount, proratedCredit, couponDeduction,
+    │                    payableAmount, availableCoupons, walletBalance,
+    │                    insufficientBalance, riskNotes
+    ▼
+[输入优惠券（可选）] ──► GET /portal-api/v1/coupons/available
+    │                      从 availableCoupons 中匹配 couponNo
+    │                      匹配后重新调用 change-quote 计算折扣
+    ▼
+[确认支付] ──► 二次确认 Modal
     │
     ▼
-[确认支付]
-    │
+[余额扣款] ──► POST /portal-api/v1/subscriptions/change
+    │              返回: changed, planId, planCode, planName,
+    │                    payableAmount, orderNo
     ▼
-[API: POST /api/v1/billing/orders]
-    │
-    ▼
-[支付网关跳转]
-    │
-    ▼
-[支付回调处理]
-    ├── 成功回调 ──► 查询订单状态 ──► 展示成功页面
-    ├── 失败回调 ──► 展示失败页面 ──► 提供重试入口
-    └── 用户手动返回 ──► 轮询订单状态 ──► 展示结果
+[支付结果处理]
+    ├── 成功 ──► 展示成功页面
+    ├── 失败 ──► 展示失败页面 ──► 提供重试入口
+    └── 余额不足 ──► 提示充值
 ```
 
 ---
@@ -113,13 +117,21 @@ interface PurchaseState {
 
 ## 5. API 调用
 
-| API | Method | Path | 说明 |
-|-----|--------|------|------|
-| 套餐列表 | GET | `/api/v1/billing/plans` | 获取套餐列表 |
-| 创建订单 | POST | `/api/v1/billing/orders` | 创建购买订单 |
-| 查询订单 | GET | `/api/v1/billing/orders/:id` | 查询订单状态 |
-| 验证优惠券 | POST | `/api/v1/billing/coupons/validate` | 验证优惠券 |
-| 费用计算 | POST | `/api/v1/billing/calculate` | 费用计算 |
+| API | Method | Path | 说明 | 后端路由来源 |
+|-----|--------|------|------|-------------|
+| 套餐列表 | GET | `/portal-api/v1/subscriptions/plans` | 获取套餐列表 | userP0.ts |
+| 费用报价 | POST | `/portal-api/v1/subscriptions/change-quote` | 计算费用（含优惠券折扣） | userP0.ts |
+| 可用优惠券 | GET | `/portal-api/v1/coupons/available` | 获取可用优惠券列表 | userP0.ts |
+| 变更套餐 | POST | `/portal-api/v1/subscriptions/change` | 余额扣款变更套餐 | userP0.ts |
+| 查询订单 | GET | `/portal-api/v1/billing/orders/:orderNo` | 查询订单状态 | userP0.ts |
+
+### 设计补充说明
+
+1. **支付方式**：后端当前仅支持账户余额扣款，不支持第三方支付网关。PaymentPanel 展示"账户余额扣款"而非支付方式选择。
+2. **优惠券验证**：通过 `change-quote` 返回的 `availableCoupons` 字段获取可用优惠券列表，CouponInput 从中匹配用户输入的 couponNo，无需单独调用 validate API。
+3. **余额不足提示**：`change-quote` 返回 `insufficientBalance` 和 `walletBalance`，前端据此展示余额不足提示。
+4. **autoRenew**：前端保留自动续费开关 UI，但后端当前不接收此参数，预留未来扩展。
+5. **订单状态**：后端 `subscriptions/change` 为同步扣款，成功直接返回 `changed: true`，无 pending 状态。前端映射为 `status: 'paid'`。
 
 ---
 
@@ -136,7 +148,7 @@ interface PurchaseState {
     │
     ▼
 [输入优惠券（Debounce 500ms）]
-    │
+    │  从 change-quote 返回的 availableCoupons 中匹配
     ▼
 [点击支付]
     │
@@ -144,8 +156,8 @@ interface PurchaseState {
 [二次确认 Modal]
     │
     ▼
-[支付网关跳转]
-    │
+[账户余额扣款]
+    │  POST /subscriptions/change 同步扣款
     ▼
 [支付结果处理]
 ```
@@ -165,10 +177,11 @@ interface PurchaseState {
 | 场景 | 处理方案 |
 |------|----------|
 | 优惠券无效 | 提示错误，不清除输入 |
+| 余额不足 | 展示余额不足提示，引导充值 |
 | 支付失败 | 展示失败原因，提供重试 |
 | 订单超时 | 自动取消，提示重新创建 |
-| 多币种 | 支持货币切换 |
 | 优惠券叠加 | 不支持叠加 |
+| 降级风险 | change-quote 返回 riskNotes，降级需二次确认 |
 
 ---
 

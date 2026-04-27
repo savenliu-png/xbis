@@ -286,11 +286,27 @@ interface AbilityEditForm {
 
 // POST /admin-api/v1/abilities/:id/publish
 interface AbilityPublishRequest {
-  abilityId: string;
   version: string;
-  changeLog: string;
+  changeLog?: string;
 }
 ```
+
+### 5.2.1 契约补充说明（D1 联调后补充）
+
+**P4 — `AbilityEditForm` 只读字段说明**：
+`AbilityEditForm` 中以下字段为**只读字段**，在 PUT 更新请求中必须剔除：
+- `status`：能力状态，由发布/下线操作变更，不可通过编辑表单直接修改
+- `version`：版本号，由发布操作自动递增，不可通过编辑表单直接修改
+- `changeLog`：变更日志，属于 `AbilityVersion` 实体，仅在发布时通过 `AbilityPublishRequest` 提交
+
+前端 `saveForm` 已通过解构剔除这些字段：`const { status, version, changeLog, ...updateData } = currentForm`
+
+**P5 — `AbilityPublishRequest.abilityId` 说明**：
+`abilityId` 已在 URL path（`/admin-api/v1/abilities/:id/publish`）中传递，无需在请求体中重复。shared 类型定义正确（仅含 `version` 和 `changeLog`），任务卡 §5.1 中的 `abilityId` 字段为描述偏差，以 shared 类型为准。
+
+**P6 — GET 响应类型说明**：
+- `GET /admin-api/v1/abilities/:id` 返回 `AbilityDetailResponse`（嵌套结构），包含 `ability`、`versions`、`uiSchema`、`executorBindings` 四个子对象
+- `GET /admin-api/v1/abilities/:id/versions` 返回 `AbilityVersionListResponse`，包含 `items`（`AbilityVersionListItem[]`）和可选 `total`
 
 ### 5.3 错误处理策略
 | 错误码 | 场景 | 处理方式 |

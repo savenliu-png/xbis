@@ -110,8 +110,27 @@ export function useJobPolling(jobId: string, config?: PollingConfig) {
 
 | API | 触发时机 | 参数 | 错误处理 |
 |-----|----------|------|----------|
-| GET /api/v1/jobs/:id/status | 轮询触发 | jobId | 增加错误计数 |
-| POST /api/v1/jobs/status | 批量轮询 | jobIds | 增加错误计数 |
+| GET /api/v1/jobs/:id/status | 轮询触发 | jobId (path) | 增加错误计数 |
+| POST /api/v1/jobs/status | 批量轮询 | jobIds: string[] (body, max 100) | 增加错误计数 |
+
+### 类型定义
+
+```typescript
+// 单任务状态查询响应
+interface JobStatusQueryResult {
+  status: JobStatus;
+  updatedAt: string;
+}
+
+// 批量任务状态查询响应项
+interface BatchJobStatusItem {
+  jobId: string;
+  status: JobStatus;
+  updatedAt: string;
+}
+
+type BatchJobStatusQueryResult = BatchJobStatusItem[];
+```
 
 ---
 

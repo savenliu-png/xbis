@@ -168,3 +168,43 @@ interface InvoiceListState {
 
 ### Step 3: 下载功能（0.5 天）
 - [ ] 下载进度提示
+
+---
+
+## 11. 契约补充说明（Contract Fix D1）
+
+> 以下内容基于后端实际 API 契约（`packages/server/src/routes/userP0.ts`）与前端类型对齐后的补充。
+
+### 11.1 API 契约确认
+
+| 接口 | URL | Method | 说明 |
+|------|-----|--------|------|
+| 发票列表 | `/portal-api/v1/invoices` | GET | 参数: `{ page?, pageSize?, status? }`，返回: `{ items: InvoiceReview[], total: number }` |
+| 发票详情 | `/portal-api/v1/invoices/:invoiceNo` | GET | 返回: `InvoiceReview & { orderNos: string[] }` |
+| 发票申请 | `/portal-api/v1/invoices/apply` | POST | 参数: `InvoiceApplyRequest`，返回: `{ invoiceNo, invoiceId, status: 'applied' }` |
+| 发票下载 | `/portal-api/v1/invoices/:invoiceNo/download` | GET | 返回: `{ invoiceNo, downloadUrl }` |
+| 可开票账单 | `/portal-api/v1/invoices/available-billing-orders` | GET | 返回: `{ items: AvailableBillingOrder[] }` |
+
+### 11.2 字段命名约定（以后端实际契约为准）
+
+| 任务卡定义 | 后端实际字段 | 决策 |
+|-----------|------------|------|
+| `enterprise` | `company` | 以 `company` 为准（后端 CHECK 约束） |
+| `taxNumber` | `taxNo` | 以 `taxNo` 为准（后端列名） |
+| `email` | `recipientEmail` | 以 `recipientEmail` 为准（语义化前缀） |
+| `phone` | `recipientPhone` | 以 `recipientPhone` 为准（语义化前缀） |
+| `orderIds` | `orderNos` | 以 `orderNos` 为准（与 BillingOrder.orderNo 一致） |
+| `invoiceId` | `invoiceNo` | 以 `invoiceNo` 为准（业务编号） |
+| `pending/processing/completed/failed` | `draft/applied/issued/downloaded/cancelled` | 以后端 5 态为准（更细粒度） |
+| — | `bankName` | 新增（企业发票开户行） |
+| — | `bankAccount` | 新增（企业发票银行账号） |
+
+### 11.3 修复记录
+
+| 修复项 | 类型 | 说明 |
+|--------|------|------|
+| `available-billing-orders` SQL 缺少 camelCase 映射 | 后端 Bug | `SELECT bo.*` → 显式列名 + AS 映射 |
+| `InvoiceApplyResponse` 缺少 `invoiceId` | 前端类型 | 后端返回 `invoiceId`，前端类型已补充 |
+| `InvoiceApplyForm` 无重试机制 | 前端 UX | 加载失败时 Alert 添加重试按钮 |
+| `InvoiceApplyRequest` 缺少 `bankName/bankAccount` | 双端 | 类型+表单+后端 INSERT+DB schema 同步补充 |
+| `InvoiceReview` 缺少 `bankName/bankAccount` | 前端类型 | 详情展示已补充 |

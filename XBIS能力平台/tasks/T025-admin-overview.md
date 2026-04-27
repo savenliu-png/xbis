@@ -82,7 +82,7 @@ export interface OverviewStats {
 }
 
 // 趋势数据
-export interface TrendData {
+export interface AdminTrendData {
   date: string;
   jobs: number;
   revenue: number;
@@ -90,7 +90,7 @@ export interface TrendData {
 }
 
 // 最近任务
-export interface RecentJob {
+export interface RecentJobItem {
   id: string;
   jobId: string;
   abilityName: string;
@@ -105,6 +105,7 @@ export interface AlertInfo {
   message: string;
   source: string;
   createdAt: string;
+  isRead: boolean;
 }
 ```
 
@@ -113,7 +114,7 @@ export interface AlertInfo {
 
 ### 5.3 类型定义位置
 - 文件：`packages/shared/src/types/index.ts`
-- 命名：`OverviewStats`, `TrendData`, `RecentJob`, `AlertInfo`
+- 命名：`OverviewStats`, `AdminTrendData`, `RecentJobItem`, `AlertInfo`
 
 ## 6. 交互流程
 
@@ -207,13 +208,13 @@ export interface AlertInfo {
 - **Method**: GET
 - **Path**: `/admin-api/v1/overview/trends`
 - **请求类型**: `{ period: 'daily' | 'weekly' | 'monthly' }`
-- **响应类型**: `TrendData[]`
+- **响应类型**: `AdminTrendData[]`
 - **权限**: 管理员
 
 #### 最近任务查询
 - **Method**: GET
 - **Path**: `/admin-api/v1/overview/recent-jobs`
-- **响应类型**: `{ items: RecentJob[]; total: number }`
+- **响应类型**: `{ items: RecentJobItem[]; total: number }`
 - **权限**: 管理员
 
 #### 告警信息查询
@@ -227,7 +228,7 @@ export interface AlertInfo {
 
 ### 8.3 接口定义位置
 - 文件：`packages/shared/src/api/services.ts`
-- 命名：`adminApi.overview.stats`, `adminApi.overview.trends`, `adminApi.overview.recentJobs`, `adminApi.overview.alerts`
+- **命名**：`adminApi.overview.stats`, `adminApi.overview.trends`, `adminApi.overview.recentJobs`, `adminApi.overview.alerts`, `adminApi.overview.markAlertRead`, `adminApi.overview.markAllAlertsRead`
 
 ## 9. 验收标准 ⭐
 
